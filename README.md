@@ -17,7 +17,7 @@ Model was trained to classify 4 different aforementioned aesthetics,
 however you can very well have fun with it by asking to classify an
 image of your dog.
 
-You can visit @corephaeus_bot telegram bot to try it out.
+You can visit https://t.me/corephaeus_bot telegram bot to try it out.
 
 **Model**
 
