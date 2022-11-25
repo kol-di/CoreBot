@@ -18,7 +18,13 @@ DATA_TRANSFORM = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-STATE_DICT_PATH = os.path.join(os.getcwd(), 'model_state_dict')
+# STATE_DICT_PATH = os.path.join(os.getcwd(), 'model_state_dict')
+
+
+async def create_core_model(state_dict_path, rebuild=False):
+    model = CoreModel()
+    await model.init_(state_dict_path, rebuild=rebuild)
+    return model
 
 
 class CoreModel:
@@ -41,11 +47,16 @@ class CoreModel:
             cls._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         return cls._instance
 
-    def __init__(self, state_dict_path, rebuild=False):
-        print('init')
+    # def __init__(self, state_dict_path, rebuild=False):
+    #     print('init')
+    #     if self.__class__.model is None or rebuild:
+    #         print('long init')
+    #         self.__class__.model = self.create_pretrained_model(state_dict_path)
+
+    async def init_(self, state_dict_path, rebuild):
         if self.__class__.model is None or rebuild:
             print('long init')
-            self.__class__.model = self.create_pretrained_model(state_dict_path)
+            self.__class__.model = await self.create_pretrained_model(state_dict_path)
 
     def __call__(self, img_filename):
         self.model.eval()
@@ -58,7 +69,7 @@ class CoreModel:
             result = self.model(img_tensor).cpu().data.numpy().argmax()
         return self.img_class_(result)
 
-    def create_pretrained_model(self, state_dict_path):
+    async def create_pretrained_model(self, state_dict_path):
         # Load the pretrained model from pytorch
         vgg16 = models.vgg16_bn(weights=models.VGG16_BN_Weights.DEFAULT)
 
@@ -84,8 +95,7 @@ class CoreModel:
                 pass
 
 
-
-model1 = CoreModel(STATE_DICT_PATH)
-model2 = CoreModel(STATE_DICT_PATH)
-print(model1 == model2)
-print(model2('7498c829aec8669c19702e255513ab82.png'))
+# model1 = CoreModel(STATE_DICT_PATH)
+# model2 = CoreModel(STATE_DICT_PATH)
+# print(model1 == model2)
+# print(model2('7498c829aec8669c19702e255513ab82.png'))
