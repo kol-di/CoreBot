@@ -1,5 +1,5 @@
 from PIL import Image
-import os
+import configparser
 
 import torch
 from torch import nn
@@ -18,13 +18,21 @@ DATA_TRANSFORM = transforms.Compose([
     transforms.ToTensor(),
 ])
 
-# STATE_DICT_PATH = os.path.join(os.getcwd(), 'model_state_dict')
-
 
 async def create_core_model(state_dict_path, rebuild=False):
+    """
+    Create the model using this functon rather than ordinary constructor
+    """
     model = CoreModel()
     await model.init_(state_dict_path, rebuild=rebuild)
     return model
+
+
+def get_core_model():
+    """
+    Call only after create_core_model
+    """
+    return CoreModel()
 
 
 class CoreModel:
@@ -47,22 +55,21 @@ class CoreModel:
             cls._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         return cls._instance
 
-    # def __init__(self, state_dict_path, rebuild=False):
-    #     print('init')
-    #     if self.__class__.model is None or rebuild:
-    #         print('long init')
-    #         self.__class__.model = self.create_pretrained_model(state_dict_path)
-
     async def init_(self, state_dict_path, rebuild):
+        """
+        Asynchronous initializer
+        """
         if self.__class__.model is None or rebuild:
             print('long init')
             self.__class__.model = await self.create_pretrained_model(state_dict_path)
 
     def __call__(self, img_filename):
+        """
+        Perform inference
+        """
         self.model.eval()
 
-        img_name = img_filename.split('/')[-1]
-        img = Image.open(f'playground/{img_name}')
+        img = Image.open(f'{img_filename}.jpg')
         img_tensor = self._data_transform(img).unsqueeze(dim=0).to(self._device)
 
         with torch.no_grad():
@@ -70,14 +77,14 @@ class CoreModel:
         return self.img_class_(result)
 
     async def create_pretrained_model(self, state_dict_path):
-        # Load the pretrained model from pytorch
+        # Load original pretrained model
         vgg16 = models.vgg16_bn(weights=models.VGG16_BN_Weights.DEFAULT)
 
-        # Change model architecture for my needs
+        # Change model architecture
         num_features = vgg16.classifier[6].in_features
-        features = list(vgg16.classifier.children())[:-1]  # Remove last layer
-        features.extend([nn.Linear(num_features, len(self._class_options))])  # Add layer with 4 outputs
-        vgg16.classifier = nn.Sequential(*features)  # Replace the model classifier
+        features = list(vgg16.classifier.children())[:-1]
+        features.extend([nn.Linear(num_features, len(self._class_options))])
+        vgg16.classifier = nn.Sequential(*features)
 
         # Load new weights after additional training
         vgg16.load_state_dict(torch.load(state_dict_path, map_location=self._device))
@@ -93,9 +100,3 @@ class CoreModel:
                 return self._class_options[label_idx]
             except KeyError:
                 pass
-
-
-# model1 = CoreModel(STATE_DICT_PATH)
-# model2 = CoreModel(STATE_DICT_PATH)
-# print(model1 == model2)
-# print(model2('7498c829aec8669c19702e255513ab82.png'))
