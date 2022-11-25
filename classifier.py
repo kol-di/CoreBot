@@ -1,5 +1,4 @@
 from PIL import Image
-import configparser
 
 import torch
 from torch import nn
