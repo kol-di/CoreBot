@@ -1,4 +1,6 @@
 import asyncio.exceptions
+import logging
+
 from telethon import TelegramClient, events
 from configparser import ConfigParser
 import os
@@ -35,7 +37,7 @@ async def start_client():
     return client
 
 
-async def client_main_loop(client):
+async def client_main_loop(client, save_images):
     model = get_core_model()
 
     async def start_conversation(event):
@@ -66,9 +68,14 @@ async def client_main_loop(client):
                     if resp_msg.photo is not None:
                         await conv.send_message(random.choice([
                             'Uuuh', 'Let me think', 'Cool one!', 'Whoah', 'I think I know the answer']))
-                        img_file_name = f'{IMAGE_SAVE_PATH}/{uuid.uuid4().hex}'
+                        img_file_name = f'{IMAGE_SAVE_PATH}/{uuid.uuid4().hex}.jpg'
                         await resp_msg.download_media(img_file_name)
                         await conv.send_message(model(img_file_name))
+                        if not save_images:
+                            if os.path.exists(img_file_name):
+                                os.remove(img_file_name)
+                            else:
+                                logging.warning("Attempted to delete non-existent file")
                         return
                     else:
                         await conv.send_message('Send an image or type /cancel')

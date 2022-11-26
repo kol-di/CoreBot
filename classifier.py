@@ -65,7 +65,7 @@ class CoreModel:
         """
         self.model.eval()
 
-        img = Image.open(f'{img_filename}.jpg')
+        img = Image.open(f'{img_filename}')
         img_tensor = self._data_transform(img).unsqueeze(dim=0).to(self._device)
 
         with torch.no_grad():
