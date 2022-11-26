@@ -1,10 +1,10 @@
 import logging
 import asyncio
-from configparser import ConfigParser
 import argparse
 
 from classifier import create_core_model
 from telebot import start_client, client_main_loop
+from utils import get_env_var
 
 
 def parse_args():
@@ -18,9 +18,7 @@ async def main():
     args = parse_args()
     save_images = args['save_images']
 
-    config = ConfigParser()
-    config.read("config.ini")
-    state_dict_path = config['Files']['STATE_DICT_PATH']
+    state_dict_path = get_env_var('STATE_DICT_PATH')
 
     _, client = await asyncio.gather(
         create_core_model(state_dict_path),

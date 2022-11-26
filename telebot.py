@@ -2,24 +2,19 @@ import asyncio.exceptions
 import logging
 
 from telethon import TelegramClient, events
-from configparser import ConfigParser
 import os
 import uuid
 import random
 from enum import Enum, auto
 
 from classifier import get_core_model
+from utils import get_env_var
 
 
-config = ConfigParser()
-config.read("config.ini")
-telegram_config = config['Telethon']
-
-API_ID = int(telegram_config['api_id'])
-API_HASH = telegram_config['api_hash']
-BOT_TOKEN = telegram_config['bot_token']
-
-IMAGE_SAVE_PATH = config['Files']['IMAGE_SAVE_PATH']
+API_ID = get_env_var('API_ID')
+API_HASH = get_env_var('API_HASH')
+BOT_TOKEN = get_env_var('BOT_TOKEN')
+IMAGE_SAVE_PATH = get_env_var('IMAGE_SAVE_PATH')
 
 
 class ChatState(Enum):
