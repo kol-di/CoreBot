@@ -40,7 +40,25 @@ async def start_client():
 async def client_main_loop(client, save_images):
     model = get_core_model()
 
+    async def break_chat_context(event):
+        sender_id = event.sender_id
+        async with client.conversation(sender_id, exclusive=False) as conv:
+            await conv.cancel_all()
+
+    async def about_context(event):
+        await break_chat_context(event)
+        await event.respond(
+            "This bot was trained to distinguish between 4 aesthetic genres, namely Draincore, Glitchcore, "
+            "Weirdcore and Breakcore, no Lesser Dutchmen or Renaissance. It's about teen culture after all.\n\n "
+            "It's important to notice, that the author was initially so confused by these genres, that actually "
+            "incorrectly attributed Breakcore to one of them. In deeply theoretical meaning (according to aesthetics "
+            "wiki), this is just a music genre, however in practice one can probably find some distinguishable "
+            "visual features of it. \n\nWhat this all means to you is that Breakcore pictures are often missclassified. "
+            "What this means to humanity is that we are shaping the visual representation of this genre here and now, "
+            "since that's new cultural trends emerge after all!")
+
     async def start_conversation(event):
+        await break_chat_context(event)
         sender_id = event.sender_id
         if conversation_state.get(sender_id, None) is not None:
             await break_chat_context(event)
@@ -53,12 +71,8 @@ async def client_main_loop(client, save_images):
                 "among the 15yr-olds!")
             conversation_state[sender_id] = ChatState.EXISTING_CONV
 
-    async def break_chat_context(event):
-        sender_id = event.sender_id
-        async with client.conversation(sender_id, exclusive=False) as conv:
-            await conv.cancel_all()
-
     async def which_core_context(event):
+        await break_chat_context(event)
         sender_id = event.sender_id
         async with client.conversation(sender_id, exclusive=False) as conv:
             await conv.send_message('Let me look at the image')
@@ -88,6 +102,8 @@ async def client_main_loop(client, save_images):
         match event.raw_text:
             case '/start':
                 await start_conversation(event)
+            case '/about':
+                await about_context(event)
             case '/which':
                 await which_core_context(event)
             case '/cancel':
