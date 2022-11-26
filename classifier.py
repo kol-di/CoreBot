@@ -6,10 +6,10 @@ from torchvision import models, transforms
 
 
 CLASS_OPTIONS = {
-    0: 'breakcore',
-    1: 'draincore',
-    2: 'glitchcore',
-    3: 'weirdcore',
+    0: 'Breakcore',
+    1: 'Draincore',
+    2: 'Glitchcore',
+    3: 'Weirdcore',
 }
 
 DATA_TRANSFORM = transforms.Compose([
@@ -44,9 +44,7 @@ class CoreModel:
     model = None
 
     def __new__(cls, *args, **kwargs):
-        print('new')
         if cls._instance is None:
-            print('long new')
             instance = super().__new__(cls)
             cls._instance = instance
             cls._class_options = CLASS_OPTIONS
@@ -59,7 +57,6 @@ class CoreModel:
         Asynchronous initializer
         """
         if self.__class__.model is None or rebuild:
-            print('long init')
             self.__class__.model = await self.create_pretrained_model(state_dict_path)
 
     def __call__(self, img_filename):

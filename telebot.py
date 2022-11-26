@@ -3,6 +3,8 @@ from telethon import TelegramClient, events
 from configparser import ConfigParser
 import os
 import uuid
+import random
+from enum import Enum, auto
 
 from classifier import get_core_model
 
@@ -18,6 +20,13 @@ BOT_TOKEN = telegram_config['bot_token']
 IMAGE_SAVE_PATH = config['Files']['IMAGE_SAVE_PATH']
 
 
+class ChatState(Enum):
+    EXISTING_CONV = auto()
+
+
+conversation_state = {}
+
+
 async def start_client():
     if not os.path.exists(IMAGE_SAVE_PATH):
         os.makedirs(IMAGE_SAVE_PATH)
@@ -29,6 +38,19 @@ async def start_client():
 async def client_main_loop(client):
     model = get_core_model()
 
+    async def start_conversation(event):
+        sender_id = event.sender_id
+        if conversation_state.get(sender_id, None) is not None:
+            await break_chat_context(event)
+        else:
+            await event.respond(
+                "Welcome to the Corephaeus! \n\nIf you feel yourself lost in a fast-paced world of teenage culture "
+                "but don't want to lose your face among the youngsters when speaking about things like Glitchcore or "
+                "Weirdcore, this bot is for you. \n\n"
+                "Type /which and send me a picture to determine the aesthetic genre and seem cool and intellignet "
+                "among the 15yr-olds!")
+            conversation_state[sender_id] = ChatState.EXISTING_CONV
+
     async def break_chat_context(event):
         sender_id = event.sender_id
         async with client.conversation(sender_id, exclusive=False) as conv:
@@ -37,18 +59,19 @@ async def client_main_loop(client):
     async def which_core_context(event):
         sender_id = event.sender_id
         async with client.conversation(sender_id, exclusive=False) as conv:
-            await conv.send_message('Let me look at your picture')
+            await conv.send_message('Let me look at the image')
             try:
                 while True:
                     resp_msg = await conv.get_response()
                     if resp_msg.photo is not None:
-                        await conv.send_message('cool pic!')
+                        await conv.send_message(random.choice([
+                            'Uuuh', 'Let me think', 'Cool one!', 'Whoah', 'I think I know the answer']))
                         img_file_name = f'{IMAGE_SAVE_PATH}/{uuid.uuid4().hex}'
                         await resp_msg.download_media(img_file_name)
                         await conv.send_message(model(img_file_name))
                         return
                     else:
-                        await conv.send_message('send an image or call /cancel')
+                        await conv.send_message('Send an image or type /cancel')
             except asyncio.exceptions.TimeoutError:
                 await conv.send_message("Session expired")
                 await break_chat_context(event)
@@ -56,6 +79,8 @@ async def client_main_loop(client):
     @client.on(events.NewMessage(pattern=r'/.*'))
     async def event_handler(event):
         match event.raw_text:
+            case '/start':
+                await start_conversation(event)
             case '/which':
                 await which_core_context(event)
             case '/cancel':
