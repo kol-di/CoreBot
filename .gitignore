@@ -21,3 +21,6 @@ config.ini
 
 # Telethon
 bot.session
+
+# Loggs
+*.log

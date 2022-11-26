@@ -15,12 +15,15 @@ async def main():
         create_core_model(state_dict_path),
         start_client()
     )
+    logging.log(100, 'Client launched')
     await client_main_loop(client)
+    logging.log(100, 'Client exited')
     return client
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
+    logging.basicConfig(filename='app.log',
+                        format='[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s',
                         level=logging.WARNING)
 
     asyncio.run(main())
